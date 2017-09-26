@@ -1,5 +1,8 @@
 #include "commands.h"
 
+//const CommandDescriptor CommandDescriptor::descriptors[]={CommandDescriptor(UPDOWN,2),CommandDescriptor(MOVETO,9),CommandDescriptor(RESET,1)};
+
+
 
 UpDown::UpDown(const ByteArray& data){
       
@@ -42,19 +45,36 @@ ByteArray Status::serialize(){
      return data;
 };
 
+
+Config::Config(int32_t maxX, int32_t maxY):Status(true,0,maxX,maxY),m_maxX(maxX), m_maxY(maxY){
+  
+}
+
 ByteArray Config::serialize(){
-     ByteArray data(9); // 9 - размер массива, .
+     ByteArray data(19); // 9 - размер массива, .
      int current = 0;
-     data[current++] = STATUS;
+     data[current++] = CONFIG;
+     data[current++] = m_success;
+     data[current++] = m_up;    
           
-     char* xBytes = reinterpret_cast<char*>(&m_maxX); //Берем адрес переменной x и преобразуем его к типу char*, а затем присваиваем его переменной xBytes
+     char* bytes = reinterpret_cast<char*>(&m_x); //Берем адрес переменной x и преобразуем его к типу char*, а затем присваиваем его переменной xBytes
      for (int i=0; i<sizeof(int32_t);i++){
-         data[current++]=xBytes[i];
+         data[current++]=bytes[i];
      }
 
-     char* yBytes = reinterpret_cast<char*>(&m_maxY);
+     bytes = reinterpret_cast<char*>(&m_y);
      for (int i=0; i<sizeof(int32_t);i++){
-         data[current++]=yBytes[i];
+         data[current++]=bytes[i];
+     };
+
+     bytes = reinterpret_cast<char*>(&m_maxX); //Берем адрес переменной x и преобразуем его к типу char*, а затем присваиваем его переменной xBytes
+     for (int i=0; i<sizeof(int32_t);i++){
+         data[current++]=bytes[i];
+     }
+
+     bytes = reinterpret_cast<char*>(&m_maxY);
+     for (int i=0; i<sizeof(int32_t);i++){
+         data[current++]=bytes[i];
      };
 
      return data;
@@ -62,3 +82,18 @@ ByteArray Config::serialize(){
 
     Commands Status::getType(){return STATUS;}
     Commands Config::getType(){return CONFIG;}
+
+IncomingCommand* commandFactory(const Commands type, const ByteArray& data){
+  switch(type){
+    case UPDOWN:
+        return new UpDown(data);
+    case MOVETO:
+        return new MoveTo(data);
+    case RESET:
+        return new Reset(data);
+    default:
+    return 0;
+  };
+  
+}
+

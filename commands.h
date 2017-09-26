@@ -1,16 +1,20 @@
 #ifndef COMMANDS_H
 #define COMMANDS_H
 
-#include "bytearray.h"
+
 #include <inttypes.h>
+#include "bytearray.h"
 
 enum Commands{
     UPDOWN,
     MOVETO,
     RESET,
     STATUS,
-    CONFIG// Домашнее задание написать STATUS
+    CONFIG,// Домашнее задание написать STATUS
+    COMMANDS_SIZE
 };
+
+
 
 class IncomingCommand {
   public:
@@ -18,6 +22,23 @@ class IncomingCommand {
   virtual int getDataLen()=0;
   
 };
+
+IncomingCommand* commandFactory(const Commands type, const ByteArray& data);
+
+/*class CommandDescriptor{
+
+    CommandDescriptor(Commands _type, int _dataLen):
+    type(_type),dataLen(_dataLen){
+    }
+  public:
+    inline Commands geType(){return type;}
+    inline int getDataLen(){return dataLen;}
+  private:
+    Commands type;
+    int dataLen;
+  public:
+    static const CommandDescriptor descriptors [];
+};*/
 
 class OutgoingCommand {
   public:
@@ -51,6 +72,8 @@ public:
     MoveTo(const ByteArray& data);
     Commands getType(){return MOVETO;}
     int getDataLen(){return 9;}
+    inline int32_t getX(){return x;}
+    inline int32_t getY(){return y;}
 private:
     int32_t x;
     int32_t y;
@@ -63,7 +86,7 @@ class Status: public OutgoingCommand
     ByteArray serialize();
     virtual Commands getType();
   
-  private:
+  protected:
     bool m_success;
     bool m_up;
     int32_t m_x;
@@ -71,7 +94,7 @@ class Status: public OutgoingCommand
     //arr
 };
 
-class Config: public OutgoingCommand //    config = <byte cmdtype=CONFIG> <int32 maxX><int32 maxY>
+class Config: public Status //    config = <byte cmdtype=CONFIG> <int32 maxX><int32 maxY>
 {
     public:
     Config(int32_t maxX, int32_t maxY);

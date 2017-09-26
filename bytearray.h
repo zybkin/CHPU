@@ -1,7 +1,7 @@
 #ifndef BYTEARRAY_H
 #define BYTEARRAY_H
 
-#include "stdcanalog.h"
+//#include "stdcanalog.h"
 
 class ByteArray{
 
@@ -32,6 +32,8 @@ public:
 private:
   char* _data;
   int _len;
-
+  void copyLen(const char* from, char* to,const int len);
+  void fillLen(char smb, char* to,const int len);
+  
 };
 #endif

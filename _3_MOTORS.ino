@@ -40,15 +40,20 @@ byte buttonStates[6]={LOW,LOW,LOW,LOW,LOW,LOW};
 
 
 void doButtons(){
+  Serial.println("R  BR L  BL TL TR ");    
   for(int i = RIGHT;i<=TOPRIGHT;i++){
     buttonStates[i-BUTTONOFFSET]=digitalRead(i);
+    
+    Serial.print((int)buttonStates[i-BUTTONOFFSET],DEC);
+    Serial.print("  ");
   }
+  Serial.println("");
   
 }
 
 bool checkAllButtonsDisabled(){
   for(int i=0;i<sizeof(buttonStates);i++){
-    if(buttonStates[i]!=LOW){
+    if(buttonStates[i]!=HIGH){
       return false;
     }
   }
@@ -61,7 +66,7 @@ bool checkAllButtonsDisabled(){
  void prepareStepper(AccelStepper& stepper){
    stepper.setMaxSpeed(400);
    stepper.setAcceleration(100);
-   stepper.setCurrentPosition(0);
+   stepper.setCurrentPosition(100000);
   
     
  }
@@ -76,7 +81,7 @@ enum GlobalStates{
 };
 OutgoingCommand* pendingCommand=NULL;
 
-GlobalStates currentState = WAITING_INCOMING;
+GlobalStates currentState = RESET_START;
 #define DELTA (100)
 
 static long ZeroSearchArray[]={-DELTA,-DELTA,DELTA};
@@ -88,7 +93,7 @@ static long EndSearchArray[]={DELTA,DELTA,-DELTA};
 
 bool checkNeedMove(long* arr){
   for(int i=0;i<3;i++){
-    if(arr[i]>0)
+    if(arr[i]!=0)
       return true;
   }
   return false;
@@ -96,20 +101,20 @@ bool checkNeedMove(long* arr){
 
 void onResetStart(){
   if(!plot.run()){
-      if(buttonStates[LEFT-BUTTONOFFSET]==LOW){
-        ZeroSearchArray[XSTEPPER]=-DELTA;
+      if(buttonStates[RIGHT-BUTTONOFFSET]==HIGH){
+        ZeroSearchArray[XSTEPPER]=DELTA;
       }else{
         ZeroSearchArray[XSTEPPER]=0;
       }
       
-      if(buttonStates[TOPLEFT-BUTTONOFFSET]==LOW){
-        ZeroSearchArray[Y1STEPPER]=-DELTA;
+      if(buttonStates[BOTTOMRIGHT-BUTTONOFFSET]==HIGH){
+        ZeroSearchArray[Y1STEPPER]=DELTA;
       }else{
         ZeroSearchArray[Y1STEPPER]=0;
       }
       
-      if(buttonStates[TOPRIGHT-BUTTONOFFSET]==LOW){
-        ZeroSearchArray[Y2STEPPER]=DELTA;
+      if(buttonStates[BOTTOMLEFT-BUTTONOFFSET]==HIGH){
+        ZeroSearchArray[Y2STEPPER]=-DELTA;
       }else{
         ZeroSearchArray[Y2STEPPER]=0;
       }
@@ -127,19 +132,19 @@ void onResetStart(){
 
 void onResetEnd(){
   if(!plot.run()){
-      if(buttonStates[RIGHT-BUTTONOFFSET]==LOW){
+      if(buttonStates[LEFT-BUTTONOFFSET]==HIGH){
         EndSearchArray[XSTEPPER]=DELTA;
       }else{
         EndSearchArray[XSTEPPER]=0;
       }
       
-      if(buttonStates[BOTTOMLEFT-BUTTONOFFSET]==LOW){
+      if(buttonStates[TOPRIGHT-BUTTONOFFSET]==HIGH){
         EndSearchArray[Y1STEPPER]=DELTA;
       }else{
         EndSearchArray[Y1STEPPER]=0;
       }
       
-      if(buttonStates[BOTTOMRIGHT-BUTTONOFFSET]==LOW){
+      if(buttonStates[TOPLEFT-BUTTONOFFSET]==HIGH){
         EndSearchArray[Y2STEPPER]=-DELTA;
       }else{
         ZeroSearchArray[Y2STEPPER]=0;
@@ -153,7 +158,7 @@ void onResetEnd(){
         currentState = ANSWERING;
       }
    }else{
-    plot.runSpeedToPosition();
+      plot.runSpeedToPosition();
    }
   }
 
@@ -242,8 +247,9 @@ void setup()
   plot.addStepper(stepperY1);
   plot.addStepper(stepperY2);
   
-  Serial.begin(115200);
+  Serial.begin(9600);
   pinMode(TOPRIGHT, INPUT);
+ // digitalWrite(TOPRIGHT, HIGH);  
   pinMode(BOTTOMRIGHT, INPUT);
   pinMode(RIGHT, INPUT);
   pinMode(TOPLEFT, INPUT);
@@ -252,7 +258,7 @@ void setup()
   
   
   //plot.moveTo(moveCoord);
-    currentState = WAITING_INCOMING;
+  //  currentState = WAITING_INCOMING;
  
 
 }
@@ -263,7 +269,8 @@ void loop()
   //Serial.println("running");
     
     doButtons();
-
+  
+  //onResetStart();
     switch(currentState){
       case RESET_START: onResetStart(); break;
       case RESET_END: onResetEnd(); break;

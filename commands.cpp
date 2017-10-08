@@ -10,7 +10,7 @@ UpDown::UpDown(const ByteArray& data){
 }
 
 Reset::Reset(const ByteArray& data){
-    
+    (data);
 };
 
 MoveTo::MoveTo(const ByteArray& data){
@@ -33,12 +33,12 @@ ByteArray Status::serialize(){
      data[current++] = m_up;    
           
      char* xBytes = reinterpret_cast<char*>(&m_x); //Берем адрес переменной x и преобразуем его к типу char*, а затем присваиваем его переменной xBytes
-     for (int i=0; i<sizeof(int32_t);i++){
+     for (unsigned int i=0; i<sizeof(int32_t);i++){
          data[current++]=xBytes[i];
      }
 
      char* yBytes = reinterpret_cast<char*>(&m_y);
-     for (int i=0; i<sizeof(int32_t);i++){
+     for (unsigned int i=0; i<sizeof(int32_t);i++){
          data[current++]=yBytes[i];
      };
 
@@ -58,22 +58,22 @@ ByteArray Config::serialize(){
      data[current++] = m_up;    
           
      char* bytes = reinterpret_cast<char*>(&m_x); //Берем адрес переменной x и преобразуем его к типу char*, а затем присваиваем его переменной xBytes
-     for (int i=0; i<sizeof(int32_t);i++){
+     for (unsigned int i=0; i<sizeof(int32_t);i++){
          data[current++]=bytes[i];
      }
 
      bytes = reinterpret_cast<char*>(&m_y);
-     for (int i=0; i<sizeof(int32_t);i++){
+     for (unsigned int i=0; i<sizeof(int32_t);i++){
          data[current++]=bytes[i];
      };
 
      bytes = reinterpret_cast<char*>(&m_maxX); //Берем адрес переменной x и преобразуем его к типу char*, а затем присваиваем его переменной xBytes
-     for (int i=0; i<sizeof(int32_t);i++){
+     for (unsigned int i=0; i<sizeof(int32_t);i++){
          data[current++]=bytes[i];
      }
 
      bytes = reinterpret_cast<char*>(&m_maxY);
-     for (int i=0; i<sizeof(int32_t);i++){
+     for (unsigned int i=0; i<sizeof(int32_t);i++){
          data[current++]=bytes[i];
      };
 

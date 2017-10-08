@@ -20,7 +20,7 @@ class IncomingCommand {
   public:
   virtual Commands getType()=0;
   virtual int getDataLen()=0;
-  
+  virtual ~IncomingCommand(){};
 };
 
 IncomingCommand* commandFactory(const Commands type, const ByteArray& data);
@@ -44,7 +44,7 @@ class OutgoingCommand {
   public:
   virtual Commands getType()=0;
   virtual ByteArray serialize()=0;
-  
+  virtual ~OutgoingCommand(){};
 };
 
 class UpDown: public IncomingCommand

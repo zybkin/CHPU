@@ -248,6 +248,16 @@ void setup()
   plot.addStepper(stepperY2);
   
   Serial.begin(9600);
+  for(int i=RIGHT;i<=TOPLEFT;i++){
+    pinMode(i, INPUT);
+    digitalWrite(i, HIGH);  
+  }
+
+    pinMode(TOPRIGHT, INPUT_PULLUP);
+    digitalWrite(TOPRIGHT, HIGH);  
+
+  
+  /*
   pinMode(TOPRIGHT, INPUT);
  // digitalWrite(TOPRIGHT, HIGH);  
   pinMode(BOTTOMRIGHT, INPUT);
@@ -255,7 +265,7 @@ void setup()
   pinMode(TOPLEFT, INPUT);
   pinMode(BOTTOMLEFT, INPUT);
   pinMode(LEFT, INPUT);
-  
+  */
   
   //plot.moveTo(moveCoord);
   //  currentState = WAITING_INCOMING;

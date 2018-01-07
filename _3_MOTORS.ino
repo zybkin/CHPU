@@ -33,10 +33,10 @@ MultiStepper plot;
 #define TOPLEFT (50)
 #define BOTTOMLEFT (49)
 #define LEFT (48)
-
+// Смещение относительно нуля
 #define BUTTONOFFSET 46
 
-byte buttonStates[6]={LOW,LOW,LOW,LOW,LOW,LOW}; 
+byte buttonStates[6]={HIGH,HIGH,HIGH,HIGH,HIGH,HIGH}; 
 
 
 void doButtons(){
@@ -86,6 +86,7 @@ GlobalStates currentState = RESET_START;
 
 static long ZeroSearchArray[]={-DELTA,-DELTA,DELTA};
 static long EndSearchArray[]={DELTA,DELTA,-DELTA};
+static unsigned long fieldSize[]={0,0};
 
 #define XSTEPPER (0)
 #define Y1STEPPER (1)
@@ -100,6 +101,10 @@ bool checkNeedMove(long* arr){
 }
 
 void onResetStart(){
+  if(fieldSize[0]>0){
+     pendingCommand = new Config(fieldSize[0],fieldSize[1]);
+     currentState = ANSWERING;
+  }
   if(!plot.run()){
       if(buttonStates[RIGHT-BUTTONOFFSET]==HIGH){
         ZeroSearchArray[XSTEPPER]=DELTA;
@@ -133,28 +138,32 @@ void onResetStart(){
 void onResetEnd(){
   if(!plot.run()){
       if(buttonStates[LEFT-BUTTONOFFSET]==HIGH){
-        EndSearchArray[XSTEPPER]=DELTA;
+        EndSearchArray[XSTEPPER]=-DELTA;
       }else{
         EndSearchArray[XSTEPPER]=0;
       }
       
       if(buttonStates[TOPRIGHT-BUTTONOFFSET]==HIGH){
-        EndSearchArray[Y1STEPPER]=DELTA;
+        EndSearchArray[Y1STEPPER]=-DELTA;
       }else{
         EndSearchArray[Y1STEPPER]=0;
       }
       
       if(buttonStates[TOPLEFT-BUTTONOFFSET]==HIGH){
-        EndSearchArray[Y2STEPPER]=-DELTA;
+        EndSearchArray[Y2STEPPER]=DELTA;
       }else{
-        ZeroSearchArray[Y2STEPPER]=0;
+        EndSearchArray[Y2STEPPER]=0;
       }
       
       if(checkNeedMove(EndSearchArray)){
         plot.move(EndSearchArray);
       }else{
         // switch to ResetEnd
-        pendingCommand = new Config(stepperX.currentPosition(),stepperY1.currentPosition());
+        fieldSize[0] = stepperX.currentPosition();
+        fieldSize[1]= stepperY2.currentPosition();
+        
+        
+        pendingCommand = new Config(fieldSize[0],fieldSize[1]);
         currentState = ANSWERING;
       }
    }else{
@@ -173,14 +182,14 @@ void onWaitingIncoming(){
               IncomingCommand* cmd = commandFactory((Commands)next,arr);
               switch(cmd->getType()){
                    case UPDOWN:
-                      pendingCommand = new Status(true,0,stepperX.currentPosition(),stepperY1.currentPosition());
+                      pendingCommand = new Status(true,0,stepperX.currentPosition(),stepperY2.currentPosition());
                       currentState = ANSWERING;
                    break;
                    case MOVETO:{
                         MoveTo * cmdMove = (MoveTo*)cmd;
                         moveCoord[XSTEPPER] = cmdMove->getX();
-                        moveCoord[Y1STEPPER] = cmdMove->getY();
-                        moveCoord[Y2STEPPER] = -cmdMove->getY();
+                        moveCoord[Y1STEPPER] = -cmdMove->getY();
+                        moveCoord[Y2STEPPER] = cmdMove->getY();
                         plot.moveTo(moveCoord);
                         currentState = MOVING;
                    }
@@ -200,7 +209,7 @@ void onWaitingIncoming(){
                  // считываем байт
                 incomingByte = Serial.read();
              }
-             pendingCommand = new Status(false,0,stepperX.currentPosition(),stepperY1.currentPosition());
+             pendingCommand = new Status(false,0,stepperX.currentPosition(),stepperY2.currentPosition());
              currentState = ANSWERING;
           }
         /*char*cMoveCoord = (char*)moveCoord;
@@ -220,7 +229,7 @@ void onWaitingIncoming(){
 void onAnswering(){
     if(pendingCommand!=NULL){
      ByteArray serialized = pendingCommand->serialize();
-     Serial.write(serialized.data(),serialized.length());
+     Serial.write((const unsigned char*)serialized.data(),serialized.length());
      delete pendingCommand;
      pendingCommand = NULL;
     }else{
@@ -229,7 +238,7 @@ void onAnswering(){
   }
 void onMoving(){
    if(!plot.run()){
-      pendingCommand = new Status(true,0,stepperX.currentPosition(),stepperY1.currentPosition());
+      pendingCommand = new Status(true,0,stepperX.currentPosition(),stepperY2.currentPosition());
       currentState = ANSWERING;
    }else{
       plot.runSpeedToPosition();
@@ -248,6 +257,7 @@ void setup()
   plot.addStepper(stepperY2);
   
   Serial.begin(9600);
+  Serial1.begin(9600);
   for(int i=RIGHT;i<=TOPLEFT;i++){
     pinMode(i, INPUT);
     digitalWrite(i, HIGH);  
